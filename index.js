@@ -213,7 +213,7 @@ function convertImageToKindleCompatiblePngAsync(
       .options({
         imageMagick: config.useImageMagick === true,
       })
-      .dither(ageConfig.dither)
+      .dither(pageConfig.dither)
       .rotate("white", pageConfig.rotation)
       .map("/app/colortable.png")
       .type(pageConfig.colorMode)
