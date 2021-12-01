@@ -16,11 +16,11 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     USE_IMAGE_MAGICK=true
 
-COPY *.js colortable.png ./
+COPY package*.json ./
 
 RUN npm ci
 
-COPY *.js ./
+COPY *.js colortable.png ./
 
 EXPOSE 5000
 
