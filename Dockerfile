@@ -20,7 +20,7 @@ COPY package*.json ./
 
 RUN npm ci
 
-COPY *.js colortable.png ./
+COPY *.js colortable*.png ./
 
 EXPOSE 5000
 

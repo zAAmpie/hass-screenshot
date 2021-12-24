@@ -215,7 +215,7 @@ function convertImageToKindleCompatiblePngAsync(
       })
       .dither(pageConfig.dither)
       .rotate("white", pageConfig.rotation)
-      .map("/app/colortable.png")
+      //.map("/app/colortable8.png")
       .type(pageConfig.colorMode)
       .bitdepth(pageConfig.grayscaleDepth)
       .quality(100)
