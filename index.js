@@ -8,6 +8,13 @@ const puppeteer = require("puppeteer");
 const { CronJob } = require("cron");
 const gm = require("gm");
 
+originalLog = console.log;
+// Overwriting
+console.log = function () {
+  var args = [].slice.call(arguments);
+  originalLog.apply(console.log,[(new Date()).toISOString() + ' '].concat(args));
+};
+
 // keep state of current battery level and whether the device is charging
 const batteryStore = {};
 
@@ -84,6 +91,8 @@ const batteryStore = {};
     // (see https://github.com/sibbl/hass-lovelace-kindle-screensaver/README.md for patch to generate it on Kindle)
     const batteryLevel = parseInt(url.searchParams.get("batteryLevel"));
     const isCharging = url.searchParams.get("isCharging");
+    const kindleName = url.searchParams.get("name");
+    const refreshCount = url.searchParams.get("c");
     const pageNumber =
       pageNumberStr === "/" ? 1 : parseInt(pageNumberStr.substr(1));
     if (
@@ -124,11 +133,14 @@ const batteryStore = {};
         };
       }
       if (!isNaN(batteryLevel) && batteryLevel >= 0 && batteryLevel <= 100) {
+        console.log(
+          `New battery level for kindle ${kindleName}: ${batteryLevel} for page ${pageNumber} on count ${refreshCount}`
+        );
         if (batteryLevel !== pageBatteryStore.batteryLevel) {
           pageBatteryStore.batteryLevel = batteryLevel;
-          console.log(
-            `New battery level: ${batteryLevel} for page ${pageNumber}`
-          );
+          // console.log(
+          //   `New battery level: ${batteryLevel} for page ${pageNumber}`
+          // );
         }
 
         if (isCharging === "Yes" && pageBatteryStore.isCharging !== true) {
