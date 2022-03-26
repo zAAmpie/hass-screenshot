@@ -20,9 +20,9 @@ console.error = function () {
   console.errorReal.apply(console.error,['[' + (new Date()).toLocaleString() + ']'].concat(args));
 };
 
-
 // keep state of current battery level and whether the device is charging
-const batteryStore = {};
+//const batteryStore = {}; // TODO remove refrences to this
+const stateStore = {};
 
 (async () => {
   if (config.pages.length === 0) {
@@ -94,12 +94,7 @@ const batteryStore = {};
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     const pageNumberStr = url.pathname;
-    // and get the battery level, if any
-    // (see https://github.com/sibbl/hass-lovelace-kindle-screensaver/README.md for patch to generate it on Kindle)
-    const batteryLevel = parseInt(url.searchParams.get("batteryLevel"));
-    const isCharging = url.searchParams.get("isCharging");
-    const kindleName = url.searchParams.get("name");
-    const refreshCount = url.searchParams.get("c");
+    saveState(url.searchParams);
     const pageNumber =
       pageNumberStr === "/" ? 1 : parseInt(pageNumberStr.substr(1));
     if (
@@ -132,35 +127,6 @@ const batteryStore = {};
       });
       response.end(data);
 
-      let pageBatteryStore = batteryStore[pageIndex];
-      if (!pageBatteryStore) {
-        pageBatteryStore = batteryStore[pageIndex] = {
-          batteryLevel: null,
-          isCharging: false
-        };
-      }
-      if (!isNaN(batteryLevel) && batteryLevel >= 0 && batteryLevel <= 100) {
-        console.log(
-          `New battery level for kindle ${kindleName}: ${batteryLevel} for page ${pageNumber} on count ${refreshCount}`
-        );
-        if (batteryLevel !== pageBatteryStore.batteryLevel) {
-          pageBatteryStore.batteryLevel = batteryLevel;
-          // console.log(
-          //   `New battery level: ${batteryLevel} for page ${pageNumber}`
-          // );
-        }
-
-        if (isCharging === "Yes" && pageBatteryStore.isCharging !== true) {
-          pageBatteryStore.isCharging = true;
-          console.log(`Battery started charging for page ${pageNumber}`);
-        } else if (
-          isCharging === "No" &&
-          pageBatteryStore.isCharging !== false
-        ) {
-          console.log(`Battery stopped charging for page ${pageNumber}`);
-          pageBatteryStore.isCharging = false;
-        }
-      }
     } catch (e) {
       console.error(e);
       response.writeHead(404);
@@ -174,10 +140,35 @@ const batteryStore = {};
   });
 })();
 
+async function saveState(searchParams) {
+  console.log(`testing params: ${searchParams}`);
+  const deviceName = searchParams.get("name");
+  if (!deviceName || deviceName == '') {
+    return;
+  }
+  const batteryLevel = parseInt(searchParams.get("batteryLevel"));
+  const isCharging = searchParams.get("isCharging");
+  const refreshCount = parseInt(searchParams.get("c"));
+  const ipAddress = searchParams.get("ip");
+  const macAddress = searchParams.get("mac");
+  const serialNumber = searchParams.get("sn");
+
+  const state = {
+    battery: batteryLevel,
+    charging: (isCharging && isCharging.toLowerCase() == "yes"),
+    name: deviceName,
+    count: refreshCount,
+    ipAddress: ipAddress,
+    macAddress: macAddress,
+    serialNumber: serialNumber
+  };
+  console.log(`DEBUG: new state for '${deviceName}': ${JSON.stringify(state)}`); // TODO comment out
+  stateStore[deviceName] = state;
+}
+
 async function renderAndConvertAsync(browser) {
   for (let pageIndex = 0; pageIndex < config.pages.length; pageIndex++) {
     const pageConfig = config.pages[pageIndex];
-    const pageBatteryStore = batteryStore[pageIndex];
 
     const url = `${config.baseUrl}${pageConfig.screenShotUrl}`;
 
@@ -206,20 +197,22 @@ async function renderAndConvertAsync(browser) {
     fs.unlink(tempPath);
     console.log(`Finished ${url}`);
 
-    if (
-      pageBatteryStore &&
-      pageBatteryStore.batteryLevel !== null &&
-      pageConfig.batteryWebHook
-    ) {
-      sendBatteryLevelToHomeAssistant(
-        pageIndex,
-        pageBatteryStore,
-        pageConfig.batteryWebHook
-      );
-    }
+    // TODO delete this?
+    // if (
+    //   pageBatteryStore &&
+    //   pageBatteryStore.batteryLevel !== null &&
+    //   pageConfig.batteryWebHook
+    // ) {
+    //   sendBatteryLevelToHomeAssistant(
+    //     pageIndex,
+    //     pageBatteryStore,
+    //     pageConfig.batteryWebHook
+    //   );
+    // }
   }
 }
 
+// TODO delete this?
 function sendBatteryLevelToHomeAssistant(
   pageIndex,
   batteryStore,
