@@ -128,7 +128,7 @@ var mqttClient = {};
       // Log when the page was accessed
       const n = new Date();
       console.log(`Image ${pageNumber} was accessed`);
-      saveState(url.searchParams);
+      saveState(request);
 
       const pageIndex = pageNumber - 1;
       const pageConfig = config.pages[pageIndex];
@@ -208,7 +208,7 @@ async function mqttSendState(state) {
     name: state.name,
     state_topic: stateTopic,
     unit_of_measurement: "%",
-    value_template: "{{ value_json.battery }}",
+    value_template: "{{ value_json.battery_level }}",
     json_attributes_topic: stateTopic,
     json_attributes_template: "{{ value_json | tojson }}",
     expire_after: 60*60, // 1hr in seconds 
@@ -251,29 +251,35 @@ async function renderIndexAsync(response) {
   response.end(index);
 }
 
-async function saveState(searchParams) {
-  const deviceName = searchParams.get("name");
+async function saveState(request) {
+  var state = {};
+
+  const headerPrefix = 'x-hass-';
+  for (const h in request.headers) {
+    if (h.startsWith(headerPrefix)) {
+      key = h.substring(headerPrefix.length);
+      var value = request.headers[h];
+      if (Number(value)) {
+        value = Number(value);
+      }
+      if (typeof value === 'string' && value.toLowerCase() == 'true') {
+        value = true;
+      }
+      if (typeof value === 'string' && value.toLowerCase() == 'false') {
+        value = false;
+      }
+      state[key] = value;
+    }
+  }
+
+  const deviceName = state["name"];
   if (!deviceName || deviceName == '') {
     return;
   }
-  const batteryLevel = parseInt(searchParams.get("batteryLevel"));
-  const isCharging = searchParams.get("isCharging");
-  const refreshCount = parseInt(searchParams.get("c"));
-  const ipAddress = searchParams.get("ip");
-  const macAddress = searchParams.get("mac");
-  const serialNumber = searchParams.get("sn");
 
-  const state = {
-    battery: batteryLevel,
-    charging: (isCharging && isCharging.toLowerCase() == "yes"),
-    name: deviceName,
-    count: refreshCount,
-    ipAddress: ipAddress,
-    macAddress: macAddress,
-    serialNumber: serialNumber,
-    lastSeen: new Date(),
-  };
-  //console.log(`DEBUG: new state for '${deviceName}': ${JSON.stringify(state)}`); // TODO comment out
+  state['last_seen'] = new Date();
+
+  // console.log(`DEBUG: new state: ${JSON.stringify(state)}`); // TODO comment out
   stateStore[deviceName] = state;
   if (config.mqttServer) {
     mqttSendState(state);
