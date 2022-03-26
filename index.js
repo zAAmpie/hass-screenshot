@@ -12,7 +12,7 @@ originalLog = console.log;
 // Overwriting
 console.log = function () {
   var args = [].slice.call(arguments);
-  originalLog.apply(console.log,[(new Date()).toISOString() + ' '].concat(args));
+  originalLog.apply(console.log,['[' + (new Date()).toLocaleString() + '] '].concat(args));
 };
 
 // keep state of current battery level and whether the device is charging
