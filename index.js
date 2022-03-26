@@ -100,23 +100,28 @@ const pageCacheTimes= {};
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     const pageNumberStr = url.pathname;
-    saveState(url.searchParams);
     const pageNumber =
-      pageNumberStr === "/" ? 1 : parseInt(pageNumberStr.substr(1));
+      pageNumberStr === "/" ? 0 : parseInt(pageNumberStr.substr(1));
     if (
       isFinite(pageNumber) === false ||
       pageNumber > config.pages.length ||
-      pageNumber < 1
+      pageNumber < 0
     ) {
       console.log(`Invalid request: ${request.url} for page ${pageNumber}`);
       response.writeHead(404);
       response.end("Invalid request");
       return;
     }
+    if (pageNumber == 0) {
+      await renderIndexAsync(response);
+      return;
+    }
+
     try {
       // Log when the page was accessed
       const n = new Date();
       console.log(`Image ${pageNumber} was accessed`);
+      saveState(url.searchParams);
 
       const pageIndex = pageNumber - 1;
       const pageConfig = config.pages[pageIndex];
@@ -153,6 +158,24 @@ const pageCacheTimes= {};
     console.log(`Server is running at ${port}`);
   });
 })();
+
+async function renderIndexAsync(response) {
+  console.log(`Rendering Index`);
+  response.writeHead(200, {
+    "Content-Type": "text/html",
+  });
+
+  var index = "<html><head><title>HASS Screenshots</title></head><body><h1>Screenshots</h1><ul>";
+  for (let pageIndex = 0; pageIndex < config.pages.length; pageIndex++) {
+    const pageConfig = config.pages[pageIndex];
+    const pageNum = pageIndex+1;
+
+    index += `<li><a href="/${pageNum}.png">${pageNum} - ${pageConfig.screenShotUrl}</a> (${pageCacheTimes[pageConfig.screenShotUrl]})</li>`;
+  }
+  index += `</ul><h3>State</h3><pre>${JSON.stringify(stateStore)}</pre></body></html>`;
+
+  response.end(index);
+}
 
 async function saveState(searchParams) {
   console.log(`testing params: ${searchParams}`);
