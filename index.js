@@ -244,7 +244,7 @@ async function renderIndexAsync(response) {
     const pageConfig = config.pages[pageIndex];
     const pageNum = pageIndex+1;
 
-    index += `<li><a href="/${pageNum}.png">${pageNum} - ${pageConfig.screenShotUrl}</a> [${pageCacheTimes[pageConfig.screenShotUrl]}]</li>`;
+    index += `<li><h3><a href="/${pageNum}.png">${pageNum} - ${pageConfig.screenShotUrl}</a></h3> [${pageCacheTimes[pageConfig.screenShotUrl]}]</li>`;
   }
   index += `</ul><h3>State</h3><pre>${JSON.stringify(stateStore, null, 2)}</pre></body></html>`;
 
