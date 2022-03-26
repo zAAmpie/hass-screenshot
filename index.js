@@ -23,6 +23,7 @@ console.error = function () {
 // keep state of current battery level and whether the device is charging
 //const batteryStore = {}; // TODO remove refrences to this
 const stateStore = {};
+const pageCacheTimes= {};
 
 (async () => {
   if (config.pages.length === 0) {
@@ -37,6 +38,9 @@ const stateStore = {};
     }
   }
 
+  if (config.realTime) {
+    console.log(`Operating in realtime mode with cache.`);
+  }
   console.log("Starting browser...");
   let browser = await puppeteer.launch({
     args: [
@@ -80,12 +84,14 @@ const stateStore = {};
   } else {
     console.log("Starting first render...");
     renderAndConvertAsync(browser);
-    console.log("Starting rendering cronjob...");
-    new CronJob({
-      cronTime: config.cronJob,
-      onTick: () => renderAndConvertAsync(browser),
-      start: true
-    });
+    if (!config.realTime) {
+      console.log("Starting rendering cronjob...");
+      new CronJob({
+        cronTime: config.cronJob,
+        onTick: () => renderAndConvertAsync(browser),
+        start: true
+      });
+    }
   }
 
   const httpServer = http.createServer(async (request, response) => {
@@ -113,10 +119,18 @@ const stateStore = {};
       console.log(`Image ${pageNumber} was accessed`);
 
       const pageIndex = pageNumber - 1;
-      const configPage = config.pages[pageIndex];
+      const pageConfig = config.pages[pageIndex];
 
-      const data = await fs.readFile(configPage.outputPath);
-      const stat = await fs.stat(configPage.outputPath);
+      if (config.realTime) {
+        if (Math.round(Date.now() - pageCacheTimes[pageConfig.screenShotUrl])/1000 > pageConfig.realtimeCacheSec) {
+        await renderAndConvertPageAsync(browser, pageConfig);
+        } else {
+          console.log(`returning cached version of ${pageConfig.screenShotUrl}`);
+        }
+      }
+
+      const data = await fs.readFile(pageConfig.outputPath);
+      const stat = await fs.stat(pageConfig.outputPath);
 
       const lastModifiedTime = new Date(stat.mtime).toUTCString();
 
@@ -169,47 +183,51 @@ async function saveState(searchParams) {
 async function renderAndConvertAsync(browser) {
   for (let pageIndex = 0; pageIndex < config.pages.length; pageIndex++) {
     const pageConfig = config.pages[pageIndex];
-
-    const url = `${config.baseUrl}${pageConfig.screenShotUrl}`;
-
-    const outputPath = pageConfig.outputPath;
-    await fsExtra.ensureDir(path.dirname(outputPath));
-
-    const tempPath = outputPath + ".temp";
-
-    console.log(`Rendering ${url} to image...`);
-
-    try {
-      await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
-    } catch (e) {
-      console.error(`Failed to render ${url}`);
-      console.error(`Error: ${e}`);
-      return
-    }
-
-    console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
-    await convertImageToCompatiblePngAsync(
-      pageConfig,
-      tempPath,
-      outputPath
-    );
-
-    fs.unlink(tempPath);
-    console.log(`Finished ${url}`);
-
-    // TODO delete this?
-    // if (
-    //   pageBatteryStore &&
-    //   pageBatteryStore.batteryLevel !== null &&
-    //   pageConfig.batteryWebHook
-    // ) {
-    //   sendBatteryLevelToHomeAssistant(
-    //     pageIndex,
-    //     pageBatteryStore,
-    //     pageConfig.batteryWebHook
-    //   );
-    // }
+    await renderAndConvertPageAsync(browser, pageConfig);
   }
+}
+
+async function renderAndConvertPageAsync(browser, pageConfig) {
+  const url = `${config.baseUrl}${pageConfig.screenShotUrl}`;
+
+  const outputPath = pageConfig.outputPath;
+  await fsExtra.ensureDir(path.dirname(outputPath));
+
+  const tempPath = outputPath + ".temp";
+
+  console.log(`Rendering ${url} to image...`);
+
+  try {
+    await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
+  } catch (e) {
+    console.error(`Failed to render ${url}`);
+    console.error(`Error: ${e}`);
+    return
+  }
+
+  console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
+  await convertImageToCompatiblePngAsync(
+    pageConfig,
+    tempPath,
+    outputPath
+  );
+
+  fs.unlink(tempPath);
+  console.log(`Finished ${url}`);
+  pageCacheTimes[pageConfig.screenShotUrl] = Date.now();
+
+  // TODO delete this?
+  // if (
+  //   pageBatteryStore &&
+  //   pageBatteryStore.batteryLevel !== null &&
+  //   pageConfig.batteryWebHook
+  // ) {
+  //   sendBatteryLevelToHomeAssistant(
+  //     pageIndex,
+  //     pageBatteryStore,
+  //     pageConfig.batteryWebHook
+  //   );
+  // }
 }
 
 // TODO delete this?

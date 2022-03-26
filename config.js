@@ -30,6 +30,7 @@ function getPagesConfig() {
       rotation: getEnvironmentVariable("ROTATION", suffix) || 0,
       scaling: getEnvironmentVariable("SCALING", suffix) || 1,
       batteryWebHook: getEnvironmentVariable("HA_BATTERY_WEBHOOK", suffix) || null,
+      realtimeCacheSec: getEnvironmentVariable("REAL_TIME_CACHE_SEC", suffix) || 60,
     });
   }
   return pages;
@@ -45,6 +46,7 @@ module.exports = {
   renderingTimeout: process.env.RENDERING_TIMEOUT || 10000,
   language: process.env.LANGUAGE || "en",
   debug: process.env.DEBUG === "true",
+  realTime: process.env.REALTIME === "true",
   ignoreCertificateErrors:
     process.env.UNSAFE_IGNORE_CERTIFICATE_ERRORS === "true",
 };
