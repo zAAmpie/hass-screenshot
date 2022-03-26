@@ -8,12 +8,18 @@ const puppeteer = require("puppeteer");
 const { CronJob } = require("cron");
 const gm = require("gm");
 
-originalLog = console.log;
 // Overwriting
+console.logReal = console.log;
+console.errorReal = console.error;
 console.log = function () {
   var args = [].slice.call(arguments);
-  originalLog.apply(console.log,['[' + (new Date()).toLocaleString() + '] '].concat(args));
+  console.logReal.apply(console.log,['[' + (new Date()).toLocaleString() + ']'].concat(args));
 };
+console.error = function () {
+  var args = [].slice.call(arguments);
+  console.errorReal.apply(console.error,['[' + (new Date()).toLocaleString() + ']'].concat(args));
+};
+
 
 // keep state of current battery level and whether the device is charging
 const batteryStore = {};
@@ -84,6 +90,7 @@ const batteryStore = {};
 
   const httpServer = http.createServer(async (request, response) => {
     // Parse the request
+    console.log(`recieved request from ${request.connection.remoteAddress} for ${request.url}`);
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     const pageNumberStr = url.pathname;
@@ -101,14 +108,14 @@ const batteryStore = {};
       pageNumber < 1
     ) {
       console.log(`Invalid request: ${request.url} for page ${pageNumber}`);
-      response.writeHead(400);
+      response.writeHead(404);
       response.end("Invalid request");
       return;
     }
     try {
       // Log when the page was accessed
       const n = new Date();
-      console.log(`${n.toISOString()}: Image ${pageNumber} was accessed`);
+      console.log(`Image ${pageNumber} was accessed`);
 
       const pageIndex = pageNumber - 1;
       const configPage = config.pages[pageIndex];
@@ -180,7 +187,14 @@ async function renderAndConvertAsync(browser) {
     const tempPath = outputPath + ".temp";
 
     console.log(`Rendering ${url} to image...`);
-    await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
+
+    try {
+      await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
+    } catch (e) {
+      console.error(`Failed to render ${url}`);
+      console.error(`Error: ${e}`);
+      return
+    }
 
     console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
     await convertImageToKindleCompatiblePngAsync(
@@ -293,8 +307,6 @@ async function renderUrlToImageAsync(browser, pageConfig, url, path) {
         ...size
       }
     });
-  } catch (e) {
-    console.error("Failed to render", e);
   } finally {
     if (config.debug === false) {
       await page.close();
