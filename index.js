@@ -188,7 +188,7 @@ async function renderAndConvertAsync(browser) {
     }
 
     console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
-    await convertImageToKindleCompatiblePngAsync(
+    await convertImageToCompatiblePngAsync(
       pageConfig,
       tempPath,
       outputPath
@@ -307,7 +307,7 @@ async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   }
 }
 
-function convertImageToKindleCompatiblePngAsync(
+function convertImageToCompatiblePngAsync(
   pageConfig,
   inputPath,
   outputPath
