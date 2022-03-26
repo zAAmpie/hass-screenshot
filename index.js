@@ -20,8 +20,7 @@ console.error = function () {
   console.errorReal.apply(console.error,['[' + (new Date()).toLocaleString() + ']'].concat(args));
 };
 
-// keep state of current battery level and whether the device is charging
-//const batteryStore = {}; // TODO remove refrences to this
+// keep state of current state for devcies
 const stateStore = {};
 const pageCacheTimes= {};
 
@@ -197,7 +196,8 @@ async function saveState(searchParams) {
     count: refreshCount,
     ipAddress: ipAddress,
     macAddress: macAddress,
-    serialNumber: serialNumber
+    serialNumber: serialNumber,
+    lastSeen: Date.now(),
   };
   console.log(`DEBUG: new state for '${deviceName}': ${JSON.stringify(state)}`); // TODO comment out
   stateStore[deviceName] = state;
@@ -254,34 +254,34 @@ async function renderAndConvertPageAsync(browser, pageConfig) {
 }
 
 // TODO delete this?
-function sendBatteryLevelToHomeAssistant(
-  pageIndex,
-  batteryStore,
-  batteryWebHook
-) {
-  const batteryStatus = JSON.stringify(batteryStore);
-  const options = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Content-Length": Buffer.byteLength(batteryStatus)
-    }
-  };
-  const url = `${config.baseUrl}/api/webhook/${batteryWebHook}`;
-  const httpLib = url.toLowerCase().startsWith("https") ? https : http;
-  const req = httpLib.request(url, options, (res) => {
-    if (res.statusCode !== 200) {
-      console.error(
-        `Update device ${pageIndex} at ${url} status ${res.statusCode}: ${res.statusMessage}`
-      );
-    }
-  });
-  req.on("error", (e) => {
-    console.error(`Update ${pageIndex} at ${url} error: ${e.message}`);
-  });
-  req.write(batteryStatus);
-  req.end();
-}
+// function sendBatteryLevelToHomeAssistant(
+//   pageIndex,
+//   batteryStore,
+//   batteryWebHook
+// ) {
+//   const batteryStatus = JSON.stringify(batteryStore);
+//   const options = {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       "Content-Length": Buffer.byteLength(batteryStatus)
+//     }
+//   };
+//   const url = `${config.baseUrl}/api/webhook/${batteryWebHook}`;
+//   const httpLib = url.toLowerCase().startsWith("https") ? https : http;
+//   const req = httpLib.request(url, options, (res) => {
+//     if (res.statusCode !== 200) {
+//       console.error(
+//         `Update device ${pageIndex} at ${url} status ${res.statusCode}: ${res.statusMessage}`
+//       );
+//     }
+//   });
+//   req.on("error", (e) => {
+//     console.error(`Update ${pageIndex} at ${url} error: ${e.message}`);
+//   });
+//   req.write(batteryStatus);
+//   req.end();
+// }
 
 async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
