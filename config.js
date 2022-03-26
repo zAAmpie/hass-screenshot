@@ -30,7 +30,7 @@ function getPagesConfig() {
       rotation: getEnvironmentVariable("ROTATION", suffix) || 0,
       scaling: getEnvironmentVariable("SCALING", suffix) || 1,
       batteryWebHook: getEnvironmentVariable("HA_BATTERY_WEBHOOK", suffix) || null,
-      realtimeCacheSec: getEnvironmentVariable("REAL_TIME_CACHE_SEC", suffix) || 60,
+      realTimeCacheSec: getEnvironmentVariable("REAL_TIME_CACHE_SEC", suffix) || 60,
     });
   }
   return pages;
@@ -46,7 +46,10 @@ module.exports = {
   renderingTimeout: process.env.RENDERING_TIMEOUT || 10000,
   language: process.env.LANGUAGE || "en",
   debug: process.env.DEBUG === "true",
-  realTime: process.env.REALTIME === "true",
+  realTime: process.env.REAL_TIME === "true",
   ignoreCertificateErrors:
     process.env.UNSAFE_IGNORE_CERTIFICATE_ERRORS === "true",
+  mqttServer: process.env.MQTT_SERVER || null,
+  mqttUser: process.env.MQTT_USERNAME || null,
+  mqttPassword: process.env.MQTT_PASSWORD || null,
 };

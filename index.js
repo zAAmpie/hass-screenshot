@@ -2,6 +2,7 @@ const config = require("./config");
 const path = require("path");
 const http = require("http");
 const https = require("https");
+const mqtt = require('mqtt');
 const { promises: fs } = require("fs");
 const fsExtra = require("fs-extra");
 const puppeteer = require("puppeteer");
@@ -24,6 +25,8 @@ console.error = function () {
 const stateStore = {};
 const pageCacheTimes= {};
 
+var mqttClient = {};
+
 (async () => {
   if (config.pages.length === 0) {
     return console.error("Please check your configuration");
@@ -40,6 +43,11 @@ const pageCacheTimes= {};
   if (config.realTime) {
     console.log(`Operating in realtime mode with cache.`);
   }
+
+  if (config.mqttServer) {
+    mqttConnect();
+  }
+
   console.log("Starting browser...");
   let browser = await puppeteer.launch({
     args: [
@@ -126,7 +134,7 @@ const pageCacheTimes= {};
       const pageConfig = config.pages[pageIndex];
 
       if (config.realTime) {
-        if (Math.round(Date.now() - pageCacheTimes[pageConfig.screenShotUrl])/1000 > pageConfig.realtimeCacheSec) {
+        if (Math.round((new Date()) - pageCacheTimes[pageConfig.screenShotUrl])/1000 > pageConfig.realTimeCacheSec) {
         await renderAndConvertPageAsync(browser, pageConfig);
         } else {
           console.log(`returning cached version of ${pageConfig.screenShotUrl}`);
@@ -158,6 +166,73 @@ const pageCacheTimes= {};
   });
 })();
 
+async function mqttConnect() {
+  console.log(`Attempting to connect to mqtt://${config.mqttServer}`);
+  mqttClient = mqtt.connect(`mqtt://${config.mqttServer}`,{clientId:"hass-screenshot", username: config.mqttUser, password: config.mqttPassword});
+  mqttClient.on("connect",function(connack){
+    console.log("MQTT Connected!");
+  });
+  mqttClient.on("error",function(error){
+    console.error("MQTT error:" + error);
+    new Promise(r => setTimeout(r, 60000)); //wait 1 minute
+    //process.exit(1);
+    mqttConnect();
+  });
+  // not sure if this is needed
+  // mqttClient.on("disconnect",function(d){
+  //   console.error("MQTT disconnect:" + d);
+  //   new Promise(r => setTimeout(r, 60000)); //wait 1 minute
+  //   //process.exit(1);
+  //   mqttConnect();
+  // });
+}
+
+async function mqttSendState(state) {
+  if (!state || !state.name || state.name.length == 0) {
+    return;
+  }
+  if (!mqttClient || ! mqttClient.connected) {
+    console.error(`MQTT error: no client to send for ${state.name}`);
+    return;
+  }
+
+  const qos = 1;
+  const retain = true;
+  const configTopic = `homeassistant/sensor/displays/${state.name}/config`;
+  const stateTopic = `homeassistant/sensor/displays/${state.name}/state`;
+
+  const config = {
+    unique_id: `${state.name}_${state.macAddress}`,
+    device_class: "battery",
+    state_class: "measurement",
+    name: state.name,
+    state_topic: stateTopic,
+    unit_of_measurement: "%",
+    value_template: "{{ value_json.battery }}",
+    json_attributes_topic: stateTopic,
+    json_attributes_template: "{{ value_json | tojson }}",
+    expire_after: 60*60, // 1hr in seconds 
+  };
+
+  // send config
+  var configString = JSON.stringify(config)
+  console.log(`MQTT sending config: ${configString}`);
+  await mqttClient.publish(configTopic, configString, { qos: qos, retain: retain }, (error) => {
+    if (error) {
+      console.error(`MQTT config publish error "${topic}": ${error}`);
+    }
+  })
+
+  // send state
+  var stateString = JSON.stringify(state)
+  console.log(`MQTT sending state: ${stateString}`);
+  await mqttClient.publish(stateTopic, stateString, { qos: qos, retain: retain }, (error) => {
+    if (error) {
+      console.error(`MQTT state publish error "${topic}": ${error}`);
+    }
+  })
+}
+
 async function renderIndexAsync(response) {
   console.log(`Rendering Index`);
   response.writeHead(200, {
@@ -169,15 +244,14 @@ async function renderIndexAsync(response) {
     const pageConfig = config.pages[pageIndex];
     const pageNum = pageIndex+1;
 
-    index += `<li><a href="/${pageNum}.png">${pageNum} - ${pageConfig.screenShotUrl}</a> (${pageCacheTimes[pageConfig.screenShotUrl]})</li>`;
+    index += `<li><a href="/${pageNum}.png">${pageNum} - ${pageConfig.screenShotUrl}</a> [${pageCacheTimes[pageConfig.screenShotUrl]}]</li>`;
   }
-  index += `</ul><h3>State</h3><pre>${JSON.stringify(stateStore)}</pre></body></html>`;
+  index += `</ul><h3>State</h3><pre>${JSON.stringify(stateStore, null, 2)}</pre></body></html>`;
 
   response.end(index);
 }
 
 async function saveState(searchParams) {
-  console.log(`testing params: ${searchParams}`);
   const deviceName = searchParams.get("name");
   if (!deviceName || deviceName == '') {
     return;
@@ -197,10 +271,13 @@ async function saveState(searchParams) {
     ipAddress: ipAddress,
     macAddress: macAddress,
     serialNumber: serialNumber,
-    lastSeen: Date.now(),
+    lastSeen: new Date(),
   };
-  console.log(`DEBUG: new state for '${deviceName}': ${JSON.stringify(state)}`); // TODO comment out
+  //console.log(`DEBUG: new state for '${deviceName}': ${JSON.stringify(state)}`); // TODO comment out
   stateStore[deviceName] = state;
+  if (config.mqttServer) {
+    mqttSendState(state);
+  }
 }
 
 async function renderAndConvertAsync(browser) {
@@ -237,51 +314,9 @@ async function renderAndConvertPageAsync(browser, pageConfig) {
 
   fs.unlink(tempPath);
   console.log(`Finished ${url}`);
-  pageCacheTimes[pageConfig.screenShotUrl] = Date.now();
-
-  // TODO delete this?
-  // if (
-  //   pageBatteryStore &&
-  //   pageBatteryStore.batteryLevel !== null &&
-  //   pageConfig.batteryWebHook
-  // ) {
-  //   sendBatteryLevelToHomeAssistant(
-  //     pageIndex,
-  //     pageBatteryStore,
-  //     pageConfig.batteryWebHook
-  //   );
-  // }
+  pageCacheTimes[pageConfig.screenShotUrl] = new Date();
 }
 
-// TODO delete this?
-// function sendBatteryLevelToHomeAssistant(
-//   pageIndex,
-//   batteryStore,
-//   batteryWebHook
-// ) {
-//   const batteryStatus = JSON.stringify(batteryStore);
-//   const options = {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       "Content-Length": Buffer.byteLength(batteryStatus)
-//     }
-//   };
-//   const url = `${config.baseUrl}/api/webhook/${batteryWebHook}`;
-//   const httpLib = url.toLowerCase().startsWith("https") ? https : http;
-//   const req = httpLib.request(url, options, (res) => {
-//     if (res.statusCode !== 200) {
-//       console.error(
-//         `Update device ${pageIndex} at ${url} status ${res.statusCode}: ${res.statusMessage}`
-//       );
-//     }
-//   });
-//   req.on("error", (e) => {
-//     console.error(`Update ${pageIndex} at ${url} error: ${e.message}`);
-//   });
-//   req.write(batteryStatus);
-//   req.end();
-// }
 
 async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
