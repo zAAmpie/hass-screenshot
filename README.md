@@ -40,7 +40,7 @@ Home Assistant related stuff:
 | `GRAYSCALE_DEPTH`         | `8`                                   | no       | yes      | Ggrayscale bit depth your kindle supports        |
 | `COLOR_MODE`              | `GrayScale`                           | no       | yes      | ColorMode to use, ex: `GrayScale`, or `TrueColor`.  |
 | `DITHER`                  | `false`                               | no       | yes      | Apply a dither to the images. |
-| `REAL_TIME`               | `false`                               | no       | no       | Disables cron and renders iamges as they are requests to save CPU |
+| `REAL_TIME`               | `false`                               | no       | no       | Disables cron and renders images as they are requests to save CPU |
 | `REAL_TIME_CACHE_SEC`     | `60`                                  | no       | yes      | How long to cache images for when `REAL_TIME` is set to true |
 | `MQTT_SERVER`             | ``                                    | no       | no       | MQTT hostname to report values to |
 | `MQTT_USERNAME`           | ``                                    | no       | no       | MQTT authentication username if required |
