@@ -201,8 +201,8 @@ async function mqttSendState(state) {
   const configTopic = `homeassistant/sensor/displays/${state.name}/config`;
   const stateTopic = `homeassistant/sensor/displays/${state.name}/state`;
 
-  const config = {
-    unique_id: `${state.name}_${state.macAddress}`,
+  var config = {
+    unique_id: state.name,
     device_class: "battery",
     state_class: "measurement",
     name: state.name,
@@ -213,6 +213,10 @@ async function mqttSendState(state) {
     json_attributes_template: "{{ value_json | tojson }}",
     expire_after: 60*60, // 1hr in seconds 
   };
+
+  if (state.mac_address) {
+    config.unique_id = `${config.unique_id}_${state.mac_address}`
+  }
 
   // send config
   var configString = JSON.stringify(config)
