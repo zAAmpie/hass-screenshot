@@ -238,7 +238,7 @@ async function mqttSendState(state) {
 }
 
 async function renderIndexAsync(response) {
-  console.log(`Rendering Index`);
+  // console.log(`Rendering Index`);
   response.writeHead(200, {
     "Content-Type": "text/html",
   });
@@ -282,8 +282,11 @@ async function saveState(request) {
   }
 
   state['last_seen'] = new Date();
+  if (stateStore[deviceName] && stateStore[deviceName]['last_seen']) {
+    state['update_interval'] = Math.round((state['last_seen'] - stateStore[deviceName]['last_seen'])/1000);
+  }
 
-  // console.log(`DEBUG: new state: ${JSON.stringify(state)}`); // TODO comment out
+  // console.log(`DEBUG: new state: ${JSON.stringify(state)}`);
   stateStore[deviceName] = state;
   if (config.mqttServer) {
     mqttSendState(state);
