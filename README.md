@@ -60,3 +60,55 @@ Some advanced variables for local usage which shouldn't be necessary when using 
 - `PORT=5000` (port of server, which returns the last image)
 - `USE_IMAGE_MAGICK=false` (use ImageMagick instead of GraphicsMagick)
 - `UNSAFE_IGNORE_CERTIFICATE_ERRORS=true` (ignore certificate errors of e.g. self-signed certificates at your own risk)
+
+### Docker
+
+There is a [automated build on the Docker Hub](https://hub.docker.com/repository/docker/lanrat/hass-screenshot/). [`lanrat/hass-screenshot`](https://hub.docker.com/repository/docker/lanrat/hass-screenshot/)
+
+#### Docker Compose Example
+
+```yaml
+version: '3.7'
+
+services:
+  hass-screenshot:
+    container_name: hass-screenshot
+    image: lanrat/hass-screenshot
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    environment:
+      - TZ=America/Los_Angeles
+      - HA_BASE_URL=HOME_ASSISTANT_URL
+      - HA_ACCESS_TOKEN=HOME_ASSISTANT_URL
+      - LANGUAGE=en
+      - MQTT_SERVER=MQTT_SERVER_IP
+      - REAL_TIME=true
+      - RENDERING_DELAY=2
+      - COLOR_MODE=GrayScale
+        # image 1
+      - HA_SCREENSHOT_URL=/lovelace-infra/hud1?kiosk
+      - RENDERING_SCREEN_HEIGHT=825
+      - RENDERING_SCREEN_WIDTH=1200
+      - GRAYSCALE_DEPTH=3
+        # image 2
+      - HA_SCREENSHOT_URL_2=/lovelace-infra/hud2?kiosk
+      - RENDERING_SCREEN_HEIGHT_2=800
+      - RENDERING_SCREEN_WIDTH_2=600
+      - GRAYSCALE_DEPTH_2=4
+        # image 3
+      - HA_SCREENSHOT_URL_3=/lovelace-infra/hud3?kiosk
+      - RENDERING_SCREEN_HEIGHT_3=800
+      - RENDERING_SCREEN_WIDTH_3=600
+      - GRAYSCALE_DEPTH_3=4
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1"
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+```
