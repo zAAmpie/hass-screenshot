@@ -1,7 +1,6 @@
 const config = require("./config");
 const path = require("path");
 const http = require("http");
-const https = require("https");
 const mqtt = require('mqtt');
 const { promises: fs } = require("fs");
 const fsExtra = require("fs-extra");
