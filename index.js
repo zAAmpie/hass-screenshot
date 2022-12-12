@@ -382,6 +382,7 @@ async function renderUrlToImageAsync(browser, pageConfig, url, path) {
     await page.screenshot({
       path,
       type: "png",
+      captureBeyondViewport: false,
       clip: {
         x: 0,
         y: 0,
