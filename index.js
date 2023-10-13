@@ -173,17 +173,7 @@ async function mqttConnect() {
   });
   mqttClient.on("error",function(error){
     console.error("MQTT error:" + error);
-    new Promise(r => setTimeout(r, 60000)); //wait 1 minute
-    //process.exit(1);
-    mqttConnect();
   });
-  // not sure if this is needed
-  // mqttClient.on("disconnect",function(d){
-  //   console.error("MQTT disconnect:" + d);
-  //   new Promise(r => setTimeout(r, 60000)); //wait 1 minute
-  //   //process.exit(1);
-  //   mqttConnect();
-  // });
 }
 
 async function mqttSendState(state) {
