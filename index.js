@@ -406,6 +406,7 @@ function convertImageToCompatiblePngAsync(
       .options({
         imageMagick: config.useImageMagick === true
       })
+      .gamma(pageConfig.removeGamma ? 1.0/2.2 : 1.0)
       .dither(pageConfig.dither)
       .rotate("white", pageConfig.rotation)
       //.map("/app/colortable8.png")

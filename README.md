@@ -42,6 +42,7 @@ Home Assistant related stuff:
 | `DITHER`                  | `false`                               | no       | yes      | Apply a dither to the images. |
 | `REAL_TIME`               | `false`                               | no       | no       | Disables cron and renders images as they are requests to save CPU |
 | `REAL_TIME_CACHE_SEC`     | `60`                                  | no       | yes      | How long to cache images for when `REAL_TIME` is set to true |
+| `REMOVE_GAMMA`            | `true`                                  | no       | no      | Remove gamma correction from image. Computer images are normally gamma corrected since monitors expect gamma corrected data, however some E-Ink displays expect images not to have gamma correction. |
 | `MQTT_SERVER`             | ``                                    | no       | no       | MQTT hostname to report values to |
 | `MQTT_USERNAME`           | ``                                    | no       | no       | MQTT authentication username if required |
 | `MQTT_PASSWORD`           | ``                                    | no       | no       | MQTT authentication password if required |
