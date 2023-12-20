@@ -3,3 +3,5 @@ config.*.js
 cover.png
 output/
 
+/.vs
+/.vscode
