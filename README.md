@@ -30,6 +30,7 @@ Home Assistant related stuff:
 | `HA_SCREENSHOT_URL`       | `/lovelace/screensaver?kiosk`         | yes      | yes      | Relative URL to take screenshot of (btw, the `?kiosk` parameter hides the nav bar using the [kiosk mode](https://github.com/maykar/kiosk-mode) project) |
 | `HA_ACCESS_TOKEN`         | `eyJ0...`                             | yes      | no       | Long-lived access token from Home Assistant, see [official docs](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token) |
 | `LANGUAGE`                | `en`                                  | no       | no       | Language to set in browser and home assistant |
+| `PREFERS_COLOR_SCHEME`    | `light`                               | no       | no       | Enable browser dark mode, use `light` or `dark`. |
 | `CRON_JOB`                | `* * * * *`                           | no       | no       | How often to take screenshot  |
 | `RENDERING_TIMEOUT`       | `10000`                               | no       | no       | Timeout of render process, helpful if your HASS instance might be down |
 | `RENDERING_DELAY`         | `0`                                   | no       | yes      | how long to wait between navigating to the page and taking the screenshot, in milliseconds |

@@ -28,6 +28,7 @@ function getPagesConfig() {
       removeGamma: getEnvironmentVariable("REMOVE_GAMMA", suffix) || false,
       dither: getEnvironmentVariable("DITHER", suffix) || false,
       colorMode: getEnvironmentVariable("COLOR_MODE", suffix) || "GrayScale",
+      refersColorScheme: getEnvironmentVariable("PREFERS_COLOR_SCHEME", suffix) || "light",
       rotation: getEnvironmentVariable("ROTATION", suffix) || 0,
       scaling: getEnvironmentVariable("SCALING", suffix) || 1,
       batteryWebHook: getEnvironmentVariable("HA_BATTERY_WEBHOOK", suffix) || null,
