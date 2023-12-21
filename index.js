@@ -319,7 +319,6 @@ async function renderAndConvertPageAsync(browser, pageConfig) {
   pageCacheTimes[pageConfig.screenShotUrl] = new Date();
 }
 
-
 async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
   try {

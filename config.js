@@ -20,15 +20,14 @@ function getPagesConfig() {
       ),
       renderingDelay: getEnvironmentVariable("RENDERING_DELAY", suffix) || 0,
       renderingScreenSize: {
-        height:
-          getEnvironmentVariable("RENDERING_SCREEN_HEIGHT", suffix) || 800,
+        height: getEnvironmentVariable("RENDERING_SCREEN_HEIGHT", suffix) || 800,
         width: getEnvironmentVariable("RENDERING_SCREEN_WIDTH", suffix) || 600,
       },
       grayscaleDepth: getEnvironmentVariable("GRAYSCALE_DEPTH", suffix) || 8,
       removeGamma: getEnvironmentVariable("REMOVE_GAMMA", suffix) || false,
       dither: getEnvironmentVariable("DITHER", suffix) || false,
       colorMode: getEnvironmentVariable("COLOR_MODE", suffix) || "GrayScale",
-      refersColorScheme: getEnvironmentVariable("PREFERS_COLOR_SCHEME", suffix) || "light",
+      prefersColorScheme: getEnvironmentVariable("PREFERS_COLOR_SCHEME", suffix) || "light",
       rotation: getEnvironmentVariable("ROTATION", suffix) || 0,
       scaling: getEnvironmentVariable("SCALING", suffix) || 1,
       batteryWebHook: getEnvironmentVariable("HA_BATTERY_WEBHOOK", suffix) || null,
