@@ -102,7 +102,14 @@ var mqttClient = {};
 
   const httpServer = http.createServer(async (request, response) => {
     // Parse the request
-    console.log(`recieved request from ${request.connection.remoteAddress} for ${request.url}`);
+    console.log(`received request from ${request.connection.remoteAddress} for ${request.url}`);
+
+    // support to kill the process
+    if (request.url == '/exit') {
+        process.exit(1);
+        return;
+    }
+
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     const pageNumberStr = url.pathname;

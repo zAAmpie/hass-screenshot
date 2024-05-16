@@ -17,6 +17,7 @@ services:
       - LANGUAGE=en
       - ROTATION=0
       - SCALING=1
+    restart: unless-stopped
     ports:
       - 5000:5000
     volumes:
