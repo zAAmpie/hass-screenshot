@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
+        name: QEMU Setup
+        uses: docker/setup-qemu-action@v3.0.0
+      -
         name: Checkout
         uses: actions/checkout@v3
       -
@@ -44,3 +47,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
+
