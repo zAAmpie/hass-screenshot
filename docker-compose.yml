@@ -1,24 +1,29 @@
-version: "3.8"
-
+---
+version: "3.7"
 services:
-  app:
-    image: sibbl/hass-lovelace-kindle-screensaver:latest
+  hass-screenshot:
+    image: zaampie/hass-dashboard-screenshot:latest
+    container_name: hass-screenshot
     environment:
-      - HA_BASE_URL=https://your-path-to-home-assistant:8123
-      - HA_SCREENSHOT_URL=/lovelace?kiosk
-      - HA_ACCESS_TOKEN=eyJ0...
-      - CRON_JOB=* * * * *
-      - RENDERING_TIMEOUT=30000
-      - RENDERING_DELAY=0
-      - RENDERING_SCREEN_HEIGHT=800
-      - RENDERING_SCREEN_WIDTH=600
-      - GRAYSCALE_DEPTH=8
-      - OUTPUT_PATH=/output/cover.png
+      - TZ=Africa/Johannesburg
+      - HA_BASE_URL=$HA_BASE_URL
+      - HA_ACCESS_TOKEN=$HA_ACCESS_TOKEN
       - LANGUAGE=en
-      - ROTATION=0
+      - REAL_TIME=true
+      - RENDERING_DELAY=500
+      - HA_SCREENSHOT_URL=$HA_SCREENSHOT_URL
+      - RENDERING_SCREEN_HEIGHT=480
+      - RENDERING_SCREEN_WIDTH=800
+      - GRAYSCALE_DEPTH=1
+      - COLORSPACE=Gray
       - SCALING=1
+      - MONOCHROME_THRESHOLD=75%
     restart: unless-stopped
     ports:
       - 5000:5000
-    volumes:
-      - ./output/:/output
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1"
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

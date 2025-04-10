@@ -2,6 +2,6 @@ node_modules/
 config.*.js
 cover.png
 output/
-
+.env
 /.vs
 /.vscode

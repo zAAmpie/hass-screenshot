@@ -26,10 +26,13 @@ function getPagesConfig() {
       grayscaleDepth: getEnvironmentVariable("GRAYSCALE_DEPTH", suffix) || 8,
       removeGamma: getEnvironmentVariable("REMOVE_GAMMA", suffix) || false,
       dither: getEnvironmentVariable("DITHER", suffix) || false,
+      orderedDither: getEnvironmentVariable("ORDERED_DITHER", suffix) || null,
       colorMode: getEnvironmentVariable("COLOR_MODE", suffix) || "GrayScale",
+      monochromeThreshold: getEnvironmentVariable("MONOCHROME_THRESHOLD", suffix) || null,
       prefersColorScheme: getEnvironmentVariable("PREFERS_COLOR_SCHEME", suffix) || "light",
       rotation: getEnvironmentVariable("ROTATION", suffix) || 0,
       scaling: getEnvironmentVariable("SCALING", suffix) || 1,
+      colorSpace: getEnvironmentVariable("COLORSPACE", suffix) || null,
       batteryWebHook: getEnvironmentVariable("HA_BATTERY_WEBHOOK", suffix) || null,
       realTimeCacheSec: getEnvironmentVariable("REAL_TIME_CACHE_SEC", suffix) || 60,
     });

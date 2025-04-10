@@ -398,23 +398,26 @@ function convertImageToCompatiblePngAsync(
   outputPath
 ) {
   return new Promise((resolve, reject) => {
-    gm(inputPath)
+    let image = gm(inputPath)
       .options({
         imageMagick: config.useImageMagick === true
       })
       .gamma(pageConfig.removeGamma ? 1.0/2.2 : 1.0)
-      .dither(pageConfig.dither)
-      .rotate("white", pageConfig.rotation)
-      //.map("/app/colortable8.png")
-      .type(pageConfig.colorMode)
-      .bitdepth(pageConfig.grayscaleDepth)
+      .rotate("white", pageConfig.rotation);
+
+    image = pageConfig.colorSpace ? image.colorspace(pageConfig.colorSpace) : image;
+    image = pageConfig.orderedDither ? image.orderedDither(pageConfig.orderedDither) : image;
+    image = pageConfig.monochromeThreshold ? image.threshold(pageConfig.monochromeThreshold) : image;
+    image = pageConfig.colorMode ? image.type(pageConfig.colorMode) : image;
+      
+    image.bitdepth(pageConfig.grayscaleDepth)
       .quality(100)
       .write(outputPath, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
   });
 }
